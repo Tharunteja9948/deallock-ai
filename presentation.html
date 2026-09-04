@@ -376,6 +376,9 @@
         <div class="btn-group">
             <button class="nav-btn" onclick="prevSlide()">← Previous</button>
             <button class="nav-btn" onclick="nextSlide()">Next →</button>
+            <button class="nav-btn" id="speechBtn" onclick="toggleSpeech()" style="background: #16a34a; color: white; border-color: #16a34a;">
+                🔊 Read Slide (AI Voice)
+            </button>
             <a href="index.html" class="demo-link-btn">⚡ Open App</a>
         </div>
     </div>
@@ -418,6 +421,68 @@
             if (e.key === 'ArrowRight' || e.key === 'Space') nextSlide();
             if (e.key === 'ArrowLeft') prevSlide();
         });
+
+        // NATIVE BROWSER TEXT-TO-SPEECH (ZERO INSTALLATION AI VOICE)
+        function toggleSpeech() {
+            if (!('speechSynthesis' in window)) {
+                alert("Your browser does not support speech synthesis. Please open in Chrome or Edge.");
+                return;
+            }
+
+            if (window.speechSynthesis.speaking) {
+                window.speechSynthesis.cancel();
+                document.getElementById('speechBtn').innerText = "🔊 Read Slide (AI Voice)";
+                return;
+            }
+
+            const activeSlide = document.querySelector('.slide.active');
+            const prompterBox = activeSlide.querySelector('.prompter-box');
+            if (!prompterBox) return;
+
+            let text = prompterBox.innerText
+                .replace(/🎙️ Voiceover Script.*?:/i, "")
+                .replace(/\[.*?\]/g, "")
+                .replace(/—/g, " ")
+                .trim();
+
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.lang.startsWith("en-IN") || v.name.includes("India") || v.lang.startsWith("en-US") || v.lang.startsWith("en-GB"));
+            if (preferred) utterance.voice = preferred;
+
+            utterance.onstart = () => {
+                document.getElementById('speechBtn').innerText = "⏹️ Stop AI Voice";
+            };
+
+            utterance.onend = () => {
+                document.getElementById('speechBtn').innerText = "🔊 Read Slide (AI Voice)";
+            };
+
+            utterance.onerror = () => {
+                document.getElementById('speechBtn').innerText = "🔊 Read Slide (AI Voice)";
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // Cancel speech when changing slides
+        const origNext = nextSlide;
+        nextSlide = function() {
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            document.getElementById('speechBtn').innerText = "🔊 Read Slide (AI Voice)";
+            origNext();
+        };
+
+        const origPrev = prevSlide;
+        prevSlide = function() {
+            if (window.speechSynthesis) window.speechSynthesis.cancel();
+            document.getElementById('speechBtn').innerText = "🔊 Read Slide (AI Voice)";
+            origPrev();
+        };
     </script>
 </body>
 </html>
