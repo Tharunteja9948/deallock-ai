@@ -5,6 +5,7 @@ import time
 import uuid
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
@@ -322,18 +323,26 @@ def get_reasons(
 
 
 # ============================================================
-# HOME
+# HOME & WEB UI
 # ============================================================
 
 @app.get("/")
 def home():
-
+    index_file = os.path.join(os.path.dirname(__file__), "..", "frontend", "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
     return {
-
         "message": "DealLock AI Backend is running",
-
         "total_products": len(products),
+        "status": "healthy"
+    }
 
+
+@app.get("/api")
+def api_root():
+    return {
+        "message": "DealLock AI Backend is running",
+        "total_products": len(products),
         "categories": sorted(
             list(
                 set(
